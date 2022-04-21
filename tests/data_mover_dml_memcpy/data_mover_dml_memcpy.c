@@ -34,7 +34,7 @@ dml_memcpy(enum data_mover_dml_type type, uint64_t flags)
 	free(buf_a);
 	free(buf_b);
 
-	return 0;
+	return 1;
 }
 
 static int
@@ -72,5 +72,5 @@ main(void)
 			return ret;
 	}
 
-	return 0;
+	return 1;
 }

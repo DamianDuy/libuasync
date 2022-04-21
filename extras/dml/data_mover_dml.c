@@ -88,6 +88,26 @@ data_mover_dml_memmove_job_init(dml_job_t *dml_job,
 }
 
 /*
+ * data_mover_dml_memset_job_init -- initializes new memset dml job
+ */
+static dml_job_t *
+data_mover_dml_memset_job_init(dml_job_t *dml_job,
+	void *str, int c, size_t n, uint64_t flags)
+{
+	uint64_t dml_flags = 0;
+	data_mover_dml_translate_flags(flags, &dml_flags);
+
+	dml_job->operation = DML_OP_FILL;
+	dml_job->destination_first_ptr = (uint8_t *)str;
+	dml_job->destination_length = n;
+	dml_job->pattern[0] = c;
+	dml_job->source_length = 1;
+	dml_job->flags = dml_flags;
+
+	return dml_job;
+}
+
+/*
  * data_mover_dml_job_delete -- delete job struct
  */
 static void
@@ -113,6 +133,18 @@ data_mover_dml_memcpy_job_submit(dml_job_t *dml_job)
  */
 static void *
 data_mover_dml_memmove_job_submit(dml_job_t *dml_job)
+{
+	dml_status_t status;
+	status = dml_submit_job(dml_job);
+
+	return status == DML_STATUS_OK ? dml_job->destination_first_ptr : NULL;
+}
+
+/*
+ * data_mover_dml_memset_job_submit -- submit memmove job (nonblocking)
+ */
+static void *
+data_mover_dml_memset_job_submit(dml_job_t *dml_job)
 {
 	dml_status_t status;
 	status = dml_submit_job(dml_job);
@@ -171,6 +203,25 @@ data_mover_dml_operation_new(struct vdm *vdm,
 			return dml_job;
 			break;
 		}
+		case VDM_OPERATION_MEMSET: {
+			status = dml_get_job_size(vdm_dml->path, &job_size);
+			if (status != DML_STATUS_OK)
+				return NULL;
+
+			dml_job = membuf_alloc(vdm_dml->membuf, job_size);
+			if (dml_job == NULL)
+				return NULL;
+
+			dml_status_t status =
+				dml_init_job(vdm_dml->path, dml_job);
+			if (status != DML_STATUS_OK) {
+				membuf_free(dml_job);
+				return NULL;
+			}
+
+			return dml_job;
+			break;
+		}
 		default:
 		ASSERT(0); /* unreachable */
 	}
@@ -211,6 +262,11 @@ data_mover_dml_operation_delete(void *data,
 				output->output.memmove.dest =
 					job->destination_first_ptr;
 			}
+			break;
+		case DML_OP_FILL:
+			output->type = VDM_OPERATION_MEMSET;
+				output->output.memset.str =
+					job->destination_first_ptr;
 			break;
 		default:
 			ASSERT(0);
@@ -274,6 +330,14 @@ data_mover_dml_operation_start(void *data,
 					operation->data.memmove.flags);
 				data_mover_dml_memmove_job_submit(job);
 			}
+			break;
+		case DML_OP_FILL:
+			data_mover_dml_memset_job_init(job,
+					operation->data.memset.str,
+					operation->data.memset.c,
+					operation->data.memset.n,
+					operation->data.memset.flags);
+			data_mover_dml_memset_job_submit(job);
 			break;
 		default:
 			ASSERT(0);
