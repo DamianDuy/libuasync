@@ -12,7 +12,7 @@ check_movdir64b()
 
 # execute DML tests only if MOVDIR64B instruction is available
 if (MOVDIR64B EQUAL 1)
-	execute(0 ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/${BUILD}/data_mover_dml_memmove)
+	execute(0 ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/${BUILD}/data_mover_dml_memset)
 endif()
 
 cleanup()
