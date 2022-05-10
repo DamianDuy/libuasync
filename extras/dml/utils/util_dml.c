@@ -50,7 +50,7 @@ util_dml_check_hw_available()
 	dml_job_ptr->source_length = buf_alloc_size;
 	dml_job_ptr->destination_length = buf_alloc_size;
 
-	status = dml_execute_job(dml_job_ptr);
+	status = dml_execute_job(dml_job_ptr, DML_WAIT_MODE_BUSY_POLL);
 	if (status != DML_STATUS_OK) {
 		ret = -1;
 	}

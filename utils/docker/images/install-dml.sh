@@ -13,8 +13,8 @@ set -e
 git clone https://github.com/intel/DML
 cd DML
 
-# DML v0.1.6-beta
-git checkout v0.1.6-beta
+# DML v0.1.9-beta
+git checkout v0.1.9-beta
 
 mkdir build
 cd build
